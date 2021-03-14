@@ -1,0 +1,16 @@
+{
+  "name": "arc-db-pool",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@architect/architect": "^8.4.10",
+    "@architect/functions": "^3.13.9",
+    "@architect/sandbox": "^3.3.7"
+  }
+}
