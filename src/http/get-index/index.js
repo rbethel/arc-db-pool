@@ -1,12 +1,46 @@
 // learn more about HTTP functions here: https://arc.codes/primitives/http
-exports.handler = async function http (req) {
-  return {
-    statusCode: 200,
-    headers: {
-      'cache-control': 'no-cache, no-store, must-revalidate, max-age=0, s-maxage=0',
-      'content-type': 'text/html; charset=utf8'
-    },
-    body: `
+// const { PrismaClient } = require("@prisma/client");
+let { requestDbLock } = require("./db-lock");
+// const prisma = new PrismaClient();
+
+// let dbOperation = async () => {
+//     await prisma.$connect();
+//     let allUsers = await prisma.user.findMany({
+//         include: { posts: true },
+//     });
+//     console.dir(allUsers, { depth: null });
+//     return allUsers;
+// };
+// let cleanup = async () => prisma.$disconnect;
+
+let dbOperation = async () => {
+    console.time("dbOp");
+    await new Promise((resolve) => setTimeout(resolve, 100 + Math.random() * 20));
+    console.timeEnd("dbOp");
+    return { message: "hello world" };
+};
+let cleanup = async () => await new Promise((resolve) => setTimeout(resolve, 10));
+
+exports.handler = async function http(req) {
+    console.time("db");
+    let result = await requestDbLock(dbOperation, cleanup, { poolSize: 2 });
+    // let result = await main()
+    //     .catch((e) => {
+    //         throw e;
+    //     })
+    //     .finally(async (data) => {
+    //         await prisma.$disconnect();
+    //         return data;
+    //     });
+    console.timeEnd("db");
+    let output = JSON.stringify(result);
+    return {
+        statusCode: 200,
+        headers: {
+            "cache-control": "no-cache, no-store, must-revalidate, max-age=0, s-maxage=0",
+            "content-type": "text/html; charset=utf8",
+        },
+        body: `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -56,6 +90,7 @@ exports.handler = async function http (req) {
         <p class="margin-bottom-8">
           Get started by editing this file at:
         </p>
+        <pre>${output}</pre>
         <code>
           src/http/{your function}/index.js
         </code>
@@ -72,6 +107,6 @@ exports.handler = async function http (req) {
   </div>
 </body>
 </html>
-`
-  }
-}
+`,
+    };
+};
