@@ -3,6 +3,10 @@ arc-db-pool
 
 @http
 get /
+get /timetest
+get /hkdb
+
+
 
 @tables
 dbpool

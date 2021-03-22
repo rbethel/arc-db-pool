@@ -1,10 +1,9 @@
-let { PrismaClient } = require("@prisma/client");
 let { requestDbLock } = require("@architect/shared/db-lock");
-let prisma = new PrismaClient();
 
 exports.handler = async function http(req) {
-    let dbOperation = async () => await prisma.user.findMany({ include: { posts: true } });
-    let cleanup = async () => await prisma.$disconnect();
+    let dbOperation = () =>
+        new Promise((resolve) => setTimeout(() => resolve({ message: "hello world" }), 100 + Math.random() * 20));
+    let cleanup = () => new Promise((resolve) => setTimeout(resolve, 10));
 
     let result = await requestDbLock(dbOperation, cleanup, { maxTime: 10000, poolSize: 5 });
 

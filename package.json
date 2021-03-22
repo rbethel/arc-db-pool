@@ -5,11 +5,11 @@
   "main": "index.js",
   "scripts": {
     "hydrate": "npx arc hydrate",
-    "hydrate:prisma": "cd ./src/http/get-index; npm install;",
-    "prisma:generate": "cd ./src/http/get-index; npx prisma generate;",
-    "deploy:no-hyrate": "npx arc --no-hydrate deploy",
-    "deploy": "npm run hydrate; npm run hydrate:prisma; npm run deploy:no-hydrate",
-    "test": "QUIET=1 tape test/**-test.js | tap-spec"
+    "prisma:generate": "cd ./src/http/get-index; prisma generate; cd ../get-hkdb; prisma generate",
+    "deploy:no-hydrate": "npx arc deploy --no-hydrate",
+    "deploy": "npm run hydrate;  npm run prisma:generate; npm run deploy:no-hydrate",
+    "test": "QUIET=1 tape test/**-test.js | tap-spec",
+    "test:staging": "QUIET=1 tape test/**-stagingtest.js | tap-spec"
   },
   "author": "",
   "license": "ISC",
@@ -19,9 +19,10 @@
     "@architect/sandbox": "^3.3.8",
     "tap-spec": "^5.0.0",
     "tape": "^5.2.2",
-    "tiny-json-http": "^7.3.0"
+    "tiny-json-http": "^7.3.0",
+    "ulid": "^2.3.0"
   },
   "devDependencies": {
-    "prisma": "^2.18.0"
+    "prisma": "^2.19.0"
   }
 }

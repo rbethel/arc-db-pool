@@ -3,7 +3,11 @@ let { requestDbLock } = require("@architect/shared/db-lock");
 let prisma = new PrismaClient();
 
 exports.handler = async function http(req) {
-    let dbOperation = async () => await prisma.user.findMany({ include: { posts: true } });
+    // let dbOperation = async () => await prisma.user.findMany({ include: { posts: true } });
+    let dbOperation = async () => {
+        await prisma.post.create({ data: { title: "test" + Date.now() } });
+        return await prisma.post.findMany({ where: { published: false } });
+    };
     let cleanup = async () => await prisma.$disconnect();
 
     let result = await requestDbLock(dbOperation, cleanup, { maxTime: 10000, poolSize: 5 });
