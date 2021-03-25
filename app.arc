@@ -4,7 +4,8 @@ arc-db-pool
 @http
 get /
 get /timetest
-get /hkdb
+get /hkprisma
+get /hksql
 
 
 

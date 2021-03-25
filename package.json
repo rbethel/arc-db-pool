@@ -5,10 +5,11 @@
   "main": "index.js",
   "scripts": {
     "hydrate": "npx arc hydrate",
-    "prisma:generate": "cd ./src/http/get-index; prisma generate; cd ../get-hkdb; prisma generate",
+    "prisma:generate": "cd ./src/http/get-index; prisma generate; cd ../get-hkprisma; prisma generate",
     "deploy:no-hydrate": "npx arc deploy --no-hydrate",
     "deploy": "npm run hydrate;  npm run prisma:generate; npm run deploy:no-hydrate",
     "test": "QUIET=1 tape test/**-test.js | tap-spec",
+    "test:db-lock": "QUIET=1 tape test/db-lock-test.js | tap-spec",
     "test:staging": "QUIET=1 tape test/**-stagingtest.js | tap-spec"
   },
   "author": "",
@@ -17,6 +18,7 @@
     "@architect/architect": "^8.4.11",
     "@architect/functions": "^3.13.9",
     "@architect/sandbox": "^3.3.8",
+    "pg": "^8.5.1",
     "tap-spec": "^5.0.0",
     "tape": "^5.2.2",
     "tiny-json-http": "^7.3.0",

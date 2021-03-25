@@ -12,38 +12,26 @@ test("start", async (t) => {
 });
 
 test("timing test", async (t) => {
+    let numberRequests = 2;
     t.plan(1);
-    Array(10)
-        .fill()
-        .map((_, idx) => console.time(1 + idx));
-    await Promise.all([
-        tiny.get({ url: baseUrl + "/timetest" }).then(() => console.timeEnd(1)),
-        tiny.get({ url: baseUrl + "/timetest" }).then(() => console.timeEnd(2)),
-        tiny.get({ url: baseUrl + "/timetest" }).then(() => console.timeEnd(3)),
-        tiny.get({ url: baseUrl + "/timetest" }).then(() => console.timeEnd(4)),
-        tiny.get({ url: baseUrl + "/timetest" }).then(() => console.timeEnd(5)),
-        tiny.get({ url: baseUrl + "/timetest" }).then(() => console.timeEnd(6)),
-        tiny.get({ url: baseUrl + "/timetest" }).then(() => console.timeEnd(7)),
-        tiny.get({ url: baseUrl + "/timetest" }).then(() => console.timeEnd(8)),
-        tiny.get({ url: baseUrl + "/timetest" }).then(() => console.timeEnd(9)),
-        tiny.get({ url: baseUrl + "/timetest" }).then(() => console.timeEnd(10)),
-    ]);
-    Array(10)
-        .fill()
-        .map((_, idx) => console.time(11 + idx));
-    await Promise.all([
-        tiny.get({ url: baseUrl }).then(() => console.timeEnd(11)),
-        tiny.get({ url: baseUrl }).then(() => console.timeEnd(12)),
-        tiny.get({ url: baseUrl }).then(() => console.timeEnd(13)),
-        tiny.get({ url: baseUrl }).then(() => console.timeEnd(14)),
-        tiny.get({ url: baseUrl }).then(() => console.timeEnd(15)),
-        tiny.get({ url: baseUrl }).then(() => console.timeEnd(16)),
-        tiny.get({ url: baseUrl }).then(() => console.timeEnd(17)),
-        tiny.get({ url: baseUrl }).then(() => console.timeEnd(18)),
-        tiny.get({ url: baseUrl }).then(() => console.timeEnd(19)),
-        tiny.get({ url: baseUrl }).then(() => console.timeEnd(20)),
-    ]);
 
+    let results = await Promise.all(
+        Array(numberRequests)
+            .fill()
+            .map((_, index) =>
+                tiny
+                    .get({ url: "http://localhost:3333/hksql", data: { bypass: false } })
+                    .catch((e) => t.fail((index + 1).toString()))
+            )
+    );
+    let times = results
+        .map((item, index) => {
+            if (item && item.body) {
+                return { duration: item.body.duration, startTime: item.body.startTime };
+            } else return "error";
+        })
+        .sort((a, b) => a.startTime <= b.startTime);
+    console.log(times);
     t.ok(true, "timing test");
 });
 

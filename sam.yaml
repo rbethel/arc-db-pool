@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Exported by architect/package@6.0.4 on 2021-03-22T16:36:12.135Z
+Description: Exported by architect/package@6.0.4 on 2021-03-24T15:45:02.118Z
 Resources:
   HTTP:
     Type: AWS::Serverless::HttpApi
@@ -30,14 +30,23 @@ Resources:
                 uri:
                   Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetTimetestHTTPLambda.Arn}/invocations
                 connectionType: INTERNET
-          /hkdb:
+          /hkprisma:
             get:
               x-amazon-apigateway-integration:
                 payloadFormatVersion: '2.0'
                 type: aws_proxy
                 httpMethod: POST
                 uri:
-                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetHkdbHTTPLambda.Arn}/invocations
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetHkprismaHTTPLambda.Arn}/invocations
+                connectionType: INTERNET
+          /hksql:
+            get:
+              x-amazon-apigateway-integration:
+                payloadFormatVersion: '2.0'
+                type: aws_proxy
+                httpMethod: POST
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetHksqlHTTPLambda.Arn}/invocations
                 connectionType: INTERNET
           /_static/{proxy+}:
             get:
@@ -56,7 +65,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: index.handler
-      CodeUri: s3://arc-db-pool-cfn-deployments-f1298/ed36e9d8affec20127624991cb4759c3
+      CodeUri: s3://arc-db-pool-cfn-deployments-f1298/3e7414908e5f4726d7ff8ece4250b9a1
       Runtime: nodejs12.x
       MemorySize: 1152
       Timeout: 5
@@ -73,6 +82,11 @@ Resources:
           SESSION_TABLE_NAME: jwe
           ARC_STATIC_BUCKET:
             Ref: StaticBucket
+          CONNECTION_STRING: DATABASE_URL=postgres://ltketduwdexbkm:a5c3964344d03d2f98694c57c65a645b34b244d914cb4682f9f63c69ffea576f@ec2-54-159-175-113.compute-1.amazonaws.com:5432/d5mdam18oljg7
+          PG_DATABASE: d5mdam18oljg7a
+          PG_HOST: ec2-54-159-175-113.compute-1.amazonaws.com
+          PG_PASSWORD: a5c3964344d03d2f98694c57c65a645b34b244d914cb4682f9f63c69ffea576f
+          PG_USERNAME: ltketduwdexbkm
       Role:
         Fn::Sub:
         - arn:aws:iam::${AWS::AccountId}:role/${roleName}
@@ -90,7 +104,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: index.handler
-      CodeUri: s3://arc-db-pool-cfn-deployments-f1298/b1342830de763e4078e5ce3bd37b4f63
+      CodeUri: s3://arc-db-pool-cfn-deployments-f1298/a78ceded36cff4f50e1787296a5d21e0
       Runtime: nodejs12.x
       MemorySize: 1152
       Timeout: 5
@@ -107,6 +121,11 @@ Resources:
           SESSION_TABLE_NAME: jwe
           ARC_STATIC_BUCKET:
             Ref: StaticBucket
+          CONNECTION_STRING: DATABASE_URL=postgres://ltketduwdexbkm:a5c3964344d03d2f98694c57c65a645b34b244d914cb4682f9f63c69ffea576f@ec2-54-159-175-113.compute-1.amazonaws.com:5432/d5mdam18oljg7
+          PG_DATABASE: d5mdam18oljg7a
+          PG_HOST: ec2-54-159-175-113.compute-1.amazonaws.com
+          PG_PASSWORD: a5c3964344d03d2f98694c57c65a645b34b244d914cb4682f9f63c69ffea576f
+          PG_USERNAME: ltketduwdexbkm
       Role:
         Fn::Sub:
         - arn:aws:iam::${AWS::AccountId}:role/${roleName}
@@ -120,11 +139,11 @@ Resources:
             Method: GET
             ApiId:
               Ref: HTTP
-  GetHkdbHTTPLambda:
+  GetHkprismaHTTPLambda:
     Type: AWS::Serverless::Function
     Properties:
       Handler: index.handler
-      CodeUri: s3://arc-db-pool-cfn-deployments-f1298/996273a0429166e47ceb3d25051a7db4
+      CodeUri: s3://arc-db-pool-cfn-deployments-f1298/8c5ca0c09c44133d9e09dab1e7860c1c
       Runtime: nodejs12.x
       MemorySize: 1152
       Timeout: 5
@@ -141,16 +160,60 @@ Resources:
           SESSION_TABLE_NAME: jwe
           ARC_STATIC_BUCKET:
             Ref: StaticBucket
+          CONNECTION_STRING: DATABASE_URL=postgres://ltketduwdexbkm:a5c3964344d03d2f98694c57c65a645b34b244d914cb4682f9f63c69ffea576f@ec2-54-159-175-113.compute-1.amazonaws.com:5432/d5mdam18oljg7
+          PG_DATABASE: d5mdam18oljg7a
+          PG_HOST: ec2-54-159-175-113.compute-1.amazonaws.com
+          PG_PASSWORD: a5c3964344d03d2f98694c57c65a645b34b244d914cb4682f9f63c69ffea576f
+          PG_USERNAME: ltketduwdexbkm
       Role:
         Fn::Sub:
         - arn:aws:iam::${AWS::AccountId}:role/${roleName}
         - roleName:
             Ref: Role
       Events:
-        GetHkdbHTTPEvent:
+        GetHkprismaHTTPEvent:
           Type: HttpApi
           Properties:
-            Path: /hkdb
+            Path: /hkprisma
+            Method: GET
+            ApiId:
+              Ref: HTTP
+  GetHksqlHTTPLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      CodeUri: s3://arc-db-pool-cfn-deployments-f1298/cae9daa6c431ca8da68175594e5dc4be
+      Runtime: nodejs12.x
+      MemorySize: 1152
+      Timeout: 5
+      Environment:
+        Variables:
+          ARC_APP_NAME: arc-db-pool
+          ARC_CLOUDFORMATION:
+            Ref: AWS::StackName
+          ARC_ENV: staging
+          ARC_HTTP: aws_proxy
+          ARC_ROLE:
+            Ref: Role
+          NODE_ENV: staging
+          SESSION_TABLE_NAME: jwe
+          ARC_STATIC_BUCKET:
+            Ref: StaticBucket
+          CONNECTION_STRING: DATABASE_URL=postgres://ltketduwdexbkm:a5c3964344d03d2f98694c57c65a645b34b244d914cb4682f9f63c69ffea576f@ec2-54-159-175-113.compute-1.amazonaws.com:5432/d5mdam18oljg7
+          PG_DATABASE: d5mdam18oljg7a
+          PG_HOST: ec2-54-159-175-113.compute-1.amazonaws.com
+          PG_PASSWORD: a5c3964344d03d2f98694c57c65a645b34b244d914cb4682f9f63c69ffea576f
+          PG_USERNAME: ltketduwdexbkm
+      Role:
+        Fn::Sub:
+        - arn:aws:iam::${AWS::AccountId}:role/${roleName}
+        - roleName:
+            Ref: Role
+      Events:
+        GetHksqlHTTPEvent:
+          Type: HttpApi
+          Properties:
+            Path: /hksql
             Method: GET
             ApiId:
               Ref: HTTP

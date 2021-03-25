@@ -12,18 +12,24 @@ const baseUrl = "https://rugq9oorec.execute-api.us-east-1.amazonaws.com";
 // });
 
 test("timing test", async (t) => {
-    t.plan(1);
-    Array(20)
-        .fill()
-        .map((item, index) => 1 + index)
-        .map((i) => console.time(i));
-    await Promise.all([
-        Array(20)
+    // t.plan(2);
+
+    await Promise.all(
+        Array(100)
             .fill()
-            .map((item, index) => 1 + index)
-            .map((i) => tiny.get({ url: baseUrl + "/timetest" }).then(() => console.timeEnd(i))),
-    ]);
-    t.ok(true, "timing test");
+            .map((_, index) => {
+                console.time((index + 1).toString());
+                tiny.get({ url: baseUrl + "/hksql", data: { bypass: "true" } })
+                    .then(() => {
+                        console.timeEnd((index + 1).toString());
+                        return;
+                    })
+                    .catch((e) => t.fail((index + 1).toString()));
+                // .finally(() => t.ok(true, (index + 1).toString()));
+            })
+    );
+    t.timeoutAfter(10000);
+    // t.ok(true, "timing test");
 });
 
 // this ends sandbox

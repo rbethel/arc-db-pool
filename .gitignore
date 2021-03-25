@@ -5,5 +5,7 @@ node_modules
 .vscode
 prefs.arc
 preferences.arc
+.arc-env
 sam.json
 sam.yam
+*.pem
