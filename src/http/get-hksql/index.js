@@ -12,22 +12,34 @@ let config = {
 };
 
 exports.handler = async function http(req) {
-    let query = req.queryStringParameters;
-    let bypass = query && query.bypass && query.bypass === "true" ? true : false;
-    let now = Date.now();
-    let client = new Client(config);
-    let dbOperation = async () => {
-        await client.connect();
-        let res = await client.query('SELECT * FROM "public"."Post" ORDER BY "id" LIMIT 100 OFFSET 0;');
-        return res;
-    };
-    let cleanup = async () => await client.end();
+    let output;
+    try {
+        let query = req.queryStringParameters;
+        let bypass = query && query.bypass && query.bypass === "true" ? true : false;
+        let now = Date.now();
+        let client = new Client(config);
+        let dbOperation = async () => {
+            await client.connect();
+            // await new Promise((resolve) => setTimeout(resolve, 1000));
+            let res = await client.query('SELECT * FROM "public"."Post" ORDER BY "id" LIMIT 100 OFFSET 0;');
+            return res;
+        };
+        let cleanup = async () => await client.end();
 
-    let result = await requestDbLock(dbOperation, cleanup, { timeout: 10000, poolSize: 20, bypass });
+        let result = await requestDbLock(dbOperation, cleanup, {
+            timeout: 10000,
+            poolSize: 20,
+            minWaitQueueMs: 10,
+            bypass,
+        });
 
-    let duration = Date.now() - now;
+        let duration = Date.now() - now;
 
-    let output = JSON.stringify({ duration, startTime: now, result: result.rows });
+        output = JSON.stringify({ duration, startTime: now, result: result.rows[0] });
+        // console.log({ output });
+    } catch (e) {
+        console.log(e);
+    }
     return {
         statusCode: 200,
         headers: {

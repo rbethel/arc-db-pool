@@ -4,7 +4,16 @@ let { ulid } = require("ulid");
 async function requestDbLock(
     operation,
     cleanup,
-    { timeout = 10000, poolName = "pool1", poolSize = 20, bypass = false }
+    {
+        timeout = 10000, //maximum time for operation (if lock is not removed from queue it is ignored after this period)
+        poolName = "pool1",
+        poolSize = 20,
+        bypass = false, //bypass and run without pool
+        minWaitQueueMs = 100, //delay before retrying if queue is full
+        waitVarianceMs = 20, //random variation in retry
+        maxRetries = 50, //maximum number of retries before throwing
+        queryLimit = 1000, //limit on queue query to avoid large queries
+    }
 ) {
     if (bypass) {
         let result = await operation();
@@ -34,12 +43,23 @@ async function requestDbLock(
                 console.log(e);
             }
         });
-    console.time("wait");
-    await waitUntilOnQueue(dynamo, { lockId, nowMs, poolName, poolSize });
-    console.timeEnd("wait");
+    await waitUntilOnQueue(dynamo, {
+        lockId,
+        nowMs,
+        poolName,
+        poolSize,
+        minWaitQueueMs,
+        waitVarianceMs,
+        maxRetries,
+        queryLimit,
+    });
 
     let result = null;
-    if (didTimeout === false) result = await operation();
+    if (didTimeout === false) {
+        result = await operation();
+    } else {
+        throw new Error("timed out");
+    }
     if (didTimeout === false) {
         maxTimeout.cancel("silent");
         await cleanup();
@@ -48,24 +68,25 @@ async function requestDbLock(
     return result;
 }
 
-async function waitUntilOnQueue(dynamo, { lockId, nowMs, poolName, poolSize }) {
+async function waitUntilOnQueue(
+    dynamo,
+    { lockId, nowMs, poolName, poolSize, minWaitQueueMs, waitVarianceMs, maxRetries }
+) {
     let maxTimeToQueue = await checkQueue(dynamo, { lockId, nowMs, poolName, poolSize });
-
-    let waitForQueueMs = 100; //ms to wait if que full
-    let waitVariance = 50; //ms variation in wait time
     let retries = 0;
-
-    while (maxTimeToQueue > Date.now() && retries < 3) {
+    while (maxTimeToQueue > Date.now()) {
         retries++;
-        console.log({
-            waitLoop: Math.min(Math.max(maxTimeToQueue - Date.now(), 0), waitForQueueMs + Math.random() * waitVariance),
-        });
-        await wait(Math.min(Math.max(maxTimeToQueue - Date.now(), 0), waitForQueueMs + Math.random() * waitVariance));
+        if (retries > maxRetries) throw new Error("maximum retries exceeded");
+        await wait(
+            Math.floor(
+                Math.min(Math.max(maxTimeToQueue - Date.now(), 0), minWaitQueueMs + Math.random() * waitVarianceMs)
+            )
+        );
         maxTimeToQueue = await checkQueue(dynamo, { lockId, nowMs, poolName, poolSize });
     }
 }
 
-async function checkQueue(dynamo, { queryLimit = 1000, poolName, poolSize, nowMs, lockId }) {
+async function checkQueue(dynamo, { queryLimit, poolName, poolSize, nowMs, lockId }) {
     let poolQuery = await dynamo.dbpool.query({
         ExpressionAttributeNames: { "#p": "pk" },
         KeyConditionExpression: "#p = :p ",
@@ -76,9 +97,9 @@ async function checkQueue(dynamo, { queryLimit = 1000, poolName, poolSize, nowMs
     });
     let pool = poolQuery.Items.filter((item) => item.exp >= nowMs);
     let orderedQue = pool.slice().sort((a, b) => (a.sk > b.sk ? 1 : -1));
-    let myPlaceInQue = orderedQue.map((item) => item.sk).indexOf(lockId);
-    let expirationTimesBeforeMe = orderedQue.slice(0, myPlaceInQue - 1).sort((a, b) => (a.exp > b.exp ? 1 : -1));
-    let maxTimeToQue = myPlaceInQue > poolSize ? expirationTimesBeforeMe[myPlaceInQue - poolSize - 1].exp : Date.now();
+    let myIndexInQue = orderedQue.map((item) => item.sk).indexOf(lockId);
+    let expirationTimesBeforeMe = orderedQue.slice(0, myIndexInQue).sort((a, b) => (a.exp > b.exp ? 1 : -1));
+    let maxTimeToQue = myIndexInQue > poolSize - 1 ? expirationTimesBeforeMe[myIndexInQue - poolSize].exp : Date.now();
     return maxTimeToQue;
 }
 
@@ -96,8 +117,8 @@ function timeoutWithCancel(ms, value) {
     return { promise, cancel };
 }
 
-function wait(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+function wait(ms, value = null) {
+    return new Promise((resolve) => setTimeout(() => resolve(value), ms));
 }
 
-module.exports = { requestDbLock };
+module.exports = { requestDbLock, wait };
