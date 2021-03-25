@@ -1,14 +1,17 @@
 {
-  "name": "script",
+  "name": "get-hksql",
   "version": "1.0.0",
-  "license": "MIT",
+  "description": "",
+  "main": "index.js",
   "dependencies": {
     "@architect/functions": "^3.13.9",
-    "@prisma/client": "^2.19.0",
+    "pg": "^8.5.1",
     "ulid": "^2.3.0"
   },
   "devDependencies": {},
-  "engines": {
-    "node": ">=10.0.0"
-  }
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
 }

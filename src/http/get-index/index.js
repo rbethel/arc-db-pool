@@ -1,34 +1,47 @@
-let { PrismaClient } = require("@prisma/client");
 let { requestDbLock } = require("@architect/shared/db-lock");
-let prisma = new PrismaClient();
+let { Client } = require("pg");
+let config = {
+    host: process.env.PG_HOST,
+    user: process.env.PG_USERNAME,
+    password: process.env.PG_PASSWORD,
+    database: process.env.PG_DATABASE,
+    port: 5432,
+    ssl: {
+        rejectUnauthorized: false,
+    },
+};
 
 exports.handler = async function http(req) {
-    let dbOperation = async () => await prisma.user.findMany({ include: { posts: true } });
-    let cleanup = async () => await prisma.$disconnect();
+    let output;
+    try {
+        let query = req.queryStringParameters;
+        let bypass = query && query.bypass && query.bypass === "true" ? true : false;
+        let now = Date.now();
+        let client = new Client(config);
+        let dbOperation = async () => {
+            await client.connect();
+            let res = await client.query('SELECT * FROM "public"."Post" ORDER BY "id" LIMIT 100 OFFSET 0;');
+            return res;
+        };
+        let cleanup = async () => await client.end();
 
-    let result = await requestDbLock(dbOperation, cleanup, { maxTime: 10000, poolSize: 5 });
+        let result = await requestDbLock(dbOperation, cleanup, {
+            bypass,
+        });
 
-    let output = JSON.stringify(result);
+        let duration = Date.now() - now;
+
+        output = JSON.stringify({ duration, startTime: now, result: result.rows[0] });
+        // console.log({ output });
+    } catch (e) {
+        console.log(e);
+    }
     return {
         statusCode: 200,
         headers: {
             "cache-control": "no-cache, no-store, must-revalidate, max-age=0, s-maxage=0",
-            "content-type": "text/html; charset=utf8",
+            "content-type": "application/json; charset=utf8",
         },
-        body: `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body class="padding-32">
-        <h1 class="margin-bottom-16">
-          Hello from Node.js!
-        </h1>
-        <pre>${output}</pre>
-</body>
-</html>
-`,
+        body: output,
     };
 };

@@ -7,5 +7,6 @@ prefs.arc
 preferences.arc
 .arc-env
 sam.json
-sam.yam
+sam.yaml
 *.pem
+.env

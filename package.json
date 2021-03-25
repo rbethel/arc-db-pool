@@ -5,11 +5,11 @@
   "main": "index.js",
   "scripts": {
     "hydrate": "npx arc hydrate",
-    "prisma:generate": "cd ./src/http/get-index; prisma generate; cd ../get-hkprisma; prisma generate",
+    "prisma:generate": "cd ./src/http/get-prisma; prisma generate",
     "deploy:no-hydrate": "npx arc deploy --no-hydrate",
     "deploy": "npm run hydrate;  npm run prisma:generate; npm run deploy:no-hydrate",
     "test": "QUIET=1 tape test/**-test.js | tap-spec",
-    "test:db-lock": "QUIET=1 tape test/db-lock-test.js | tap-spec",
+    "test:lock": "QUIET=1 tape test/requestDbLock-unit-test.js | tap-spec",
     "test:staging": "QUIET=1 tape test/**-stagingtest.js | tap-spec"
   },
   "author": "",
