@@ -12,7 +12,7 @@ test("start", async (t) => {
 });
 
 test("timing test", async (t) => {
-    let numberRequests = 2;
+    let numberRequests = 40;
     t.plan(1);
 
     let results = await Promise.all(
@@ -20,18 +20,19 @@ test("timing test", async (t) => {
             .fill()
             .map((_, index) =>
                 tiny
-                    .get({ url: "http://localhost:3333/hksql", data: { bypass: false } })
+                    .get({ url: "http://localhost:3333/hksql", data: { bypass: true } })
                     .catch((e) => t.fail((index + 1).toString()))
             )
     );
-    let times = results
-        .map((item, index) => {
-            if (item && item.body) {
-                return { duration: item.body.duration, startTime: item.body.startTime };
-            } else return "error";
-        })
-        .sort((a, b) => a.startTime <= b.startTime);
-    console.log(times);
+    // console.log(results.map((i) => (i && i.body ? i.body : i)));
+    // let times = results
+    //     .map((item, index) => {
+    //         if (item && item.body) {
+    //             return { duration: item.body.duration, startTime: item.body.startTime };
+    //         } else return "error";
+    //     })
+    //     .sort((a, b) => a.startTime <= b.startTime);
+    // console.log(times);
     t.ok(true, "timing test");
 });
 
